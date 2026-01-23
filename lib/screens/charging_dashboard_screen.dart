@@ -709,8 +709,8 @@ class _ChargingDashboardScreenState
       await mqtt.connect();
       mqtt.subscribe(
           "everest_api/setup/var/supported_setup_features", parseConfigInfo);
+      mqtt.subscribe(Topic.onlineStatus, parseOnlineStatus);
       checkOnlineStatus();
-      mqtt.subscribe("everest_api/setup/var/online_status", parseOnlineStatus);
       mqtt.subscribe(
           "everest_api/ev_manager/var/session_info", parseEvManagerSessionInfo);
     } catch (e) {
