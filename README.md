@@ -9,6 +9,14 @@ Flutter app for uMWC, BelayBox and uMWCar
 
 The app uses [fvm](https://github.com/leoafarias/fvm) so instead of every flutter command run `fvm flutter <subcommand>` to use the flutter version pinned in the [fvmrc](.fvmrc). The current version should be the same as the one used in the yocto image for the chargers
 
+## Cloud enrollment
+The "Cloud" button on the charging dashboard enrolls the charger using a one-time password (OTP) from cloud.pionix.com. It requires the `cloud-connector` CLI at `/usr/bin/cloud-connector` and the `cloud-connector` systemd service on the image; without the CLI, the button is hidden. The app uses these commands (the app runs as root):
+- `cloud-connector est status --format json` to check whether the charger is already enrolled
+- `cloud-connector est enroll --otp-code <xxxx-xxxx> --format json` to (re-)enroll the charger
+- `systemctl restart cloud-connector` to restart the cloud connection of an enrolled charger
+
+The legacy RFC 7030 enrollment (not yet adapted to `cloud-connector`) is hidden by default. To enable it, set the environment variable `DISPLAY_APP_ENABLE_RFC7030=1` (or `true`) for the display app.
+
 ## Run locally
 If one wants to run the app locally for testing purposes it is important to have a local instance of everest running or the app will be forever stuck on the loading screen.
 Follow [the everest setup guide](https://everest.github.io/nightly/general/03_quick_start_guide.html#download-and-install) until step "Software in a loop" (running `./run-sil.sh` is all we need, ./nodered-sil.sh is not required)

@@ -23,6 +23,7 @@ import 'package:display_app/data/providers/selected_protocol_provider.dart';
 import 'package:display_app/data/providers/session_info_provider.dart';
 import 'package:display_app/data/providers/telemetry_provider.dart';
 import 'package:display_app/utils/circular_queue.dart';
+import 'package:display_app/utils/cloud_connector.dart';
 import 'package:display_app/utils/constants/helper.dart';
 import 'package:display_app/utils/enums.dart';
 import 'package:display_app/utils/globals.dart';
@@ -37,6 +38,7 @@ import '../widgets/hlc_log_widget.dart';
 import '../widgets/restart_widget.dart';
 import '../widgets/session_info_body.dart';
 import 'cloud_config_provider.dart';
+import 'cloud_info_screen.dart';
 
 class ChargingDashboardScreen extends ConsumerStatefulWidget {
   const ChargingDashboardScreen({super.key});
@@ -377,7 +379,8 @@ class _ChargingDashboardScreenState
             ),
           ),
           Visibility(
-            visible: checkFileExists(scriptPath),
+            visible: CloudConnector.available ||
+                (rfc7030Enabled && checkFileExists(scriptPath)),
             child: Padding(
               padding: const EdgeInsets.only(
                 left: 10,
@@ -385,10 +388,7 @@ class _ChargingDashboardScreenState
                 right: 10,
               ),
               child: FilledButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(
-                      context, AppRoutes.configureCloudConnectionScreen);
-                },
+                onPressed: () => goToCloud(context),
                 icon: Icon(Icons.cloud),
                 label: Text(
                   "Cloud", //TODO Localisation
@@ -598,6 +598,7 @@ class _ChargingDashboardScreenState
               BorderLayoutSlot.center: makeSessionInfoBody(context),
               BorderLayoutSlot.south: Footer(
                 isOnline: _online,
+                onCloudTap: () => goToCloud(context),
                 selectedProtocolString: selectedProtocolString,
               ),
             },

@@ -6,10 +6,15 @@ import 'package:display_app/screens/errors_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:async/async.dart';
 
-const String receiveErrorsTopic =
-    "basecamp/api/1.0/error_history_consumer/error_history_api/b2m/customReceiveErrorTopic";
-const String pollErrorsTopic =
-    "basecamp/api/1.0/error_history_consumer/error_history_api/m2b/active_errors";
+/// EVerest builds external API topics as
+/// `everest_api/<version>/<api type>/<module id>/<direction>/<var>`, where m2e
+/// carries commands towards EVerest and e2m carries replies and events out of
+/// it. `error_history_api` is the module id of the error_history_consumer_API
+/// module in the EVerest config.
+const String errorApiBase =
+    "everest_api/1/error_history_consumer/error_history_api";
+const String receiveErrorsTopic = "$errorApiBase/e2m/customReceiveErrorTopic";
+const String pollErrorsTopic = "$errorApiBase/m2e/active_errors";
 
 /// a list of all reported errors
 List<BasecampError> activeErrors = [];
@@ -109,7 +114,7 @@ class BasecampError {
 
   BasecampError.fromJson(Map<String, dynamic> json) {
     type = json["type"] as String;
-    subType = json["sub_type"] as String;
+    subType = json["sub_type"] as String? ?? "";
     description = json["description"] as String;
     message = json["message"] as String;
     severity = {

@@ -3,23 +3,30 @@ import 'dart:async';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
-import '../utils/datetime_formats.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class Footer extends StatefulWidget {
+import '../data/providers/cloud_enrollment_provider.dart';
+import '../utils/cloud_connector.dart';
+import '../utils/datetime_formats.dart';
+import '../screens/cloud_info_screen.dart';
+
+class Footer extends ConsumerStatefulWidget {
   final bool isOnline;
+  final VoidCallback? onCloudTap;
   final String selectedProtocolString;
 
   const Footer({
     super.key,
     this.isOnline = true,
+    this.onCloudTap,
     this.selectedProtocolString = "",
   });
 
   @override
-  State<Footer> createState() => _FooterState();
+  ConsumerState<Footer> createState() => _FooterState();
 }
 
-class _FooterState extends State<Footer> {
+class _FooterState extends ConsumerState<Footer> {
   // ignore: unused_field
   late Timer _timer;
 
@@ -47,6 +54,9 @@ class _FooterState extends State<Footer> {
 
   @override
   Widget build(BuildContext context) {
+    final cloudAvailable = ref.watch(cloudConnectorAvailableProvider);
+    final cloudState =
+        cloudAvailable ? ref.watch(cloudEnrollmentProvider).valueOrNull : null;
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -63,35 +73,46 @@ class _FooterState extends State<Footer> {
               runAlignment: WrapAlignment.spaceBetween,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(4.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: widget.isOnline
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    _badge(
+                      context,
+                      label: widget.isOnline ? 'online'.tr() : 'offline'.tr(),
+                      background: widget.isOnline
                           ? Theme.of(context).colorScheme.tertiaryContainer
                           : Theme.of(context).colorScheme.errorContainer,
+                      foreground: widget.isOnline
+                          ? Theme.of(context).colorScheme.onTertiaryContainer
+                          : Theme.of(context).colorScheme.onErrorContainer,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 4,
-                        horizontal: 12,
+                    if (cloudAvailable)
+                      _badge(
+                        context,
+                        label: switch (cloudState) {
+                          CloudConnectorState.enrolled => 'cloud_enrolled'.tr(),
+                          CloudConnectorState.notEnrolled =>
+                            'cloud_not_enrolled'.tr(),
+                          _ => 'cloud_unknown'.tr(),
+                        },
+                        background: switch (cloudState) {
+                          CloudConnectorState.enrolled =>
+                            Theme.of(context).colorScheme.tertiaryContainer,
+                          CloudConnectorState.notEnrolled =>
+                            Theme.of(context).colorScheme.errorContainer,
+                          _ => Theme.of(context).colorScheme.surfaceContainer,
+                        },
+                        foreground: switch (cloudState) {
+                          CloudConnectorState.enrolled =>
+                            Theme.of(context).colorScheme.onTertiaryContainer,
+                          CloudConnectorState.notEnrolled =>
+                            Theme.of(context).colorScheme.onErrorContainer,
+                          _ => Theme.of(context).colorScheme.onSurfaceVariant,
+                        },
+                        onTap: widget.onCloudTap,
+                        interactive: true,
                       ),
-                      child: Text(
-                        widget.isOnline ? 'online'.tr() : 'offline'.tr(),
-                        style:
-                            Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                  color: widget.isOnline
-                                      ? Theme.of(context)
-                                          .colorScheme
-                                          .onTertiaryContainer
-                                      : Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer,
-                                ),
-                      ),
-                    ),
-                  ),
+                  ],
                 ),
                 Padding(
                   padding: const EdgeInsets.all(4.0),
@@ -116,6 +137,42 @@ class _FooterState extends State<Footer> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _badge(
+    BuildContext context, {
+    required String label,
+    required Color background,
+    required Color foreground,
+    VoidCallback? onTap,
+    bool interactive = false,
+  }) {
+    final text = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: foreground,
+            ),
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: Material(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: interactive
+            ? Semantics(
+                button: true,
+                child: InkWell(
+                  onTap: onTap ?? () => goToCloud(context),
+                  child: text,
+                ),
+              )
+            : text,
       ),
     );
   }

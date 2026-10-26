@@ -1,6 +1,7 @@
 import 'package:display_app/screens/ask_root_password_screen.dart';
 import 'package:display_app/screens/cloud_config_provider.dart';
 import 'package:display_app/screens/cloud_info_screen.dart';
+import 'package:display_app/utils/cloud_connector.dart';
 import 'package:flutter/material.dart';
 import 'package:display_app/screens/charging_dashboard_screen.dart';
 import 'package:display_app/screens/lan_info_screen.dart';
@@ -104,13 +105,13 @@ class AppRouter {
             builder: (_) => SimpleConfigProvider(mode: mode ?? EnrollMode.normal),
             settings: settings,
             fullscreenDialog: true);
-      case AppRoutes.simpleFurtherSettingsScreen:
+      case AppRoutes.simpleFurtherSettingsScreen when rfc7030Enabled:
         final config = settings.arguments as ConfigArgWrapper;
         return MaterialPageRoute(
             builder: (_) => SimpleFurtherSettings(config),
             settings: settings,
             fullscreenDialog: true);
-      case AppRoutes.advancedCloudConfigScreen:
+      case AppRoutes.advancedCloudConfigScreen when rfc7030Enabled:
         final EnrollMode? mode = settings.arguments as EnrollMode?;
         return MaterialPageRoute(
             builder: (_) => AdvancedConfigProvider(mode: mode ?? EnrollMode.normal),
